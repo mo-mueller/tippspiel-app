@@ -5,4 +5,4 @@ Das angular-cookies Repository konnte nicht mit hochgeladen werden. Man kann es 
 
 https://github.com/angular/bower-angular-cookies
 
-und dann in den Ordner www/lib/ clonen.
+und dann in den Ordner www/lib/angular-cookies clonen.
