@@ -62,6 +62,7 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'])
     })
 
       .state('app.startseite', {
+          cache: false,
           url: '/startseite',
           views: {
               'menuContent': {

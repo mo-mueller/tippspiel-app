@@ -1,6 +1,6 @@
 angular.module('starter.controllers', [])
 
-.controller('AppCtrl', function($scope, $ionicModal, $timeout, $state, $http, Auth) {
+.controller('AppCtrl', function ($scope, $ionicModal, $timeout, $state, $http, Auth, $ionicPopup) {
 
     // With the new view caching in Ionic, Controllers are only called
     // when they are recreated or on app start, instead of every page change.
@@ -9,6 +9,18 @@ angular.module('starter.controllers', [])
     //$scope.$on('$ionicView.enter', function(e) {
     //});
 
+
+    // Alert Methode
+
+    $scope.showAlert = function (titel, nachricht) {
+        var alertPopup = $ionicPopup.alert({
+            title: titel,
+            template: nachricht
+        });
+        alertPopup.then(function (res) {
+            
+        });
+    };
 
     // @@ Login @@
 
@@ -41,7 +53,7 @@ angular.module('starter.controllers', [])
         } else{
             // Username und Passwort überprüfen
 
-            $http.get('http://localhost/tippspiel/checkUserData.php?username=' + $scope.loginData.username.trim() + '&passwort=' + $scope.loginData.password.trim()).then(function (response) {
+            $http.get('http://lolchamp.suhail.uberspace.de/tippspiel/checkUserData.php?username=' + $scope.loginData.username.trim() + '&passwort=' + $scope.loginData.password.trim()).then(function (response) {
 
                 if (response.data == "login_done") {
                     Auth.setUser({
@@ -52,21 +64,22 @@ angular.module('starter.controllers', [])
                 }
                 else if (response.data == "error01") {
                     // Username und Passwort wurden nicht korrekt übermittelt
-                    alert("Etwas lief schief, versuche es später nochmal!");
+                    $scope.showAlert("Login Fehlgeschlagen!", "Etwas lief schief, versuche es später nochmal!");
+                    return;
                 }
                 else if (response.data == "error02") {
                     // Keine Verbindung zur Datenbank
-                    alert("Die Verbindung zur Datenbank ist gescheitert, versuche es später nochmal!");
+                    $scope.showAlert("Login Fehlgeschlagen!", "Die Verbindung zur Datenbank ist gescheitert, versuche es später nochmal!");
                     return;
                 }
                 else if (response.data == "error03") {
                     // Benutzername wurde nicht gefunden
-                    alert("Der Benutzername wurde nicht gefunden!");
+                    $scope.showAlert("Login Fehlgeschlagen!", "Der Benutzername wurde nicht gefunden!");
                     return;
                 }
                 else if (response.data == "error04") {
                     // Das Passwort ist falsch
-                    alert("Das Passwort ist falsch!");
+                    $scope.showAlert("Login Fehlgeschlagen!", "Das Passwort ist falsch!");
                     return;
                 }
 
@@ -82,15 +95,43 @@ angular.module('starter.controllers', [])
     };
 })
 
-.controller('StartseiteCtrl', function ($scope, Auth) {
+.controller('StartseiteCtrl', function ($scope, $http, Auth) {
 
-    $scope.username = Auth.getUser().username;
+    // Benutzernamen und letztes Logindatum holen
+
+    $http.get('http://lolchamp.suhail.uberspace.de/tippspiel/getUserData.php?name=' + Auth.getUser().username).then(function (response) {
+        var data = response.data;
+        var split = data.split(" ");
+        $scope.username = split[0];
+        var datum = split[1].split(" ")[0];
+        var splittedDatum = datum.split("-");
+        var jahr = splittedDatum[0];
+        var monat = splittedDatum[1];
+        var tag = splittedDatum[2];
+        $scope.zuletzt_online = tag + "." + monat + "." + jahr;
+    })
+
+    // Kommende und vergangende Spieltage holen
+
+    $http.get('http://lolchamp.suhail.uberspace.de/tippspiel/getStartData.php?username=' + Auth.getUser().username).then(function (response) {
+        var data = response.data;
+        $scope.vergangenespieltage = new Array();
+        $scope.kommendespieltage = new Array();
+        data.forEach(function (spieltag) {
+            if (spieltag.typ == "punkte") {
+                $scope.vergangenespieltage.push(spieltag);
+            }
+            else if (spieltag.typ == "spielegetippt") {
+                $scope.kommendespieltage.push(spieltag);
+            }
+        })
+    })
 
 })
 
 .controller('RanglisteCtrl', function ($scope, $http, $timeout) {
 
-    $http.get('http://localhost/tippspiel/getRankingData.php').then(function (response) {
+    $http.get('http://lolchamp.suhail.uberspace.de/tippspiel/getRankingData.php').then(function (response) {
         $scope.data = response.data;
         for (var i = 0; i < $scope.data.length; i++) {
             $scope.data[i].platzierung = i+1;
@@ -103,7 +144,7 @@ angular.module('starter.controllers', [])
 
         $timeout(function () {
 
-            $http.get('http://localhost/tippspiel/getRankingData.php').then(function (response) {
+            $http.get('http://lolchamp.suhail.uberspace.de/tippspiel/getRankingData.php').then(function (response) {
                 $scope.data = response.data;
                 for (var i = 0; i < $scope.data.length; i++) {
                     $scope.data[i].platzierung = i + 1;
@@ -174,7 +215,7 @@ angular.module('starter.controllers', [])
                 loadData.push(spiel.MatchID);
             })
 
-            $http.get('http://localhost/tippspiel/loadTipps.php?data=' + loadData.toString()).then(function (response) {
+            $http.get('http://lolchamp.suhail.uberspace.de/tippspiel/loadTipps.php?data=' + loadData.toString()).then(function (response) {
                 var json = response.data.substr(0, response.data.length - 1);
                 json = eval('(' + json + ')');
 
@@ -213,7 +254,7 @@ angular.module('starter.controllers', [])
             tipps.push({ "Benutzer": Auth.getUser().username, "MatchID": spiel.MatchID, "Heimtore": spiel.heimtore, "Gasttore": spiel.gasttore });
         })
 
-        $http.get('http://localhost/tippspiel/saveTipps.php?data=' + JSON.stringify(tipps)).then(function (response) {
+        $http.get('http://lolchamp.suhail.uberspace.de/tippspiel/saveTipps.php?data=' + JSON.stringify(tipps)).then(function (response) {
             if (response.data.match("tipps_gespeichert") && !response.data.match("error")) {
                 $scope.showAlert("Gespeichert!", "Alle Spiele gespeichert!");
             }
