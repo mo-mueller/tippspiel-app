@@ -1,3 +1,5 @@
+// Cookie Service für den Login Vorgang
+
 angular.module('starter.services', ['ngCookies'])
 .factory('Auth', function ($cookieStore) {
     var _user = $cookieStore.get('starter.user');

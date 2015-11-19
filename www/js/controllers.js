@@ -56,6 +56,7 @@ angular.module('starter.controllers', [])
             $http.get('http://lolchamp.suhail.uberspace.de/tippspiel/checkUserData.php?username=' + $scope.loginData.username.trim() + '&passwort=' + $scope.loginData.password.trim()).then(function (response) {
 
                 if (response.data == "login_done") {
+                    // Loginvorgang erfolgreich
                     Auth.setUser({
                         username: $scope.loginData.username
                     });
@@ -130,6 +131,8 @@ angular.module('starter.controllers', [])
 })
 
 .controller('RanglisteCtrl', function ($scope, $http, $timeout) {
+
+    // Benutzerdaten holen
 
     $http.get('http://lolchamp.suhail.uberspace.de/tippspiel/getRankingData.php').then(function (response) {
         $scope.data = response.data;
